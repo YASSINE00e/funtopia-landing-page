@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Funtopia — Group Games</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --purple: #7c3aed;
+        --purple-mid: #a78bfa;
+        --pink: #f03e6e;
+        --bg: #07030f;
+        --surface: #0f0a1a;
+        --dim: #1e1530;
+        --border: #2a2040;
+        --text: #ede9fe;
+        --muted: #6b5f8a;
+        --card-r: 22px;
+        --c-bomb: #ff5500;
+        --c-spy: #d97706;
+        --c-hangman: #a78bfa;
+        --c-guess: #00e5ff;
+        --c-mafia: #d4a574;
+      }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        font-family: "Nunito", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+
+      /* ─── Confetti ─── */
+      .confetti-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+      .confetti-layer span {
+        position: absolute;
+        background: var(--purple-mid);
+        border-radius: 50%;
+        opacity: 0;
+        animation: floatIn 1.2s forwards;
+      }
+      .confetti-layer .dash { border-radius: 3px; height: 3px; }
+      @keyframes floatIn { to { opacity: var(--op); } }
+
+      /* ─── Blobs ─── */
+      .blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(110px);
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.22;
+      }
+      .blob-1 { width: 560px; height: 560px; background: var(--purple); top: -120px; left: -120px; }
+      .blob-2 { width: 440px; height: 440px; background: var(--pink);   bottom: -90px; right: -90px; }
+      .blob-3 { width: 320px; height: 320px; background: #1d4ed8;       top: 40%; left: 60%; }
+
+      /* ─── Nav ─── */
+      nav {
+        position: relative;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 48px;
+        background: rgba(7, 3, 15, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-logo {
+        font-family: "Fredoka One", cursive;
+        font-size: 26px;
+        color: var(--purple-mid);
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+      }
+      .nav-logo-dot {
+        width: 8px; height: 8px;
+        background: var(--pink);
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .nav-links {
+        display: flex;
+        gap: 36px;
+        list-style: none;
+        align-items: center;
+      }
+      .nav-links a {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.2s;
+        letter-spacing: 0.3px;
+      }
+      .nav-links a:hover { color: var(--purple-mid); }
+      .nav-cta {
+        background: var(--purple) !important;
+        color: #fff !important;
+        padding: 10px 22px;
+        border-radius: 50px;
+        font-weight: 800 !important;
+        transition: background 0.2s, transform 0.15s !important;
+      }
+      .nav-cta:hover {
+        background: var(--purple-mid) !important;
+        color: var(--bg) !important;
+        transform: translateY(-1px);
+      }
+      /* Mobile nav — hide links, keep logo + cta only */
+      .nav-mobile-cta { display: none; }
+
+      /* ─── Hero ─── */
+      .hero {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 72px 24px 0;
+        overflow: visible;
+      }
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(167, 139, 250, 0.1);
+        border: 1px solid rgba(167, 139, 250, 0.25);
+        border-radius: 50px;
+        padding: 6px 18px;
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--purple-mid);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+        animation: fadeUp 0.6s ease both;
+      }
+      .hero-eyebrow-dot {
+        width: 6px; height: 6px;
+        background: var(--pink);
+        border-radius: 50%;
+        animation: pulse 1.4s ease infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50%       { transform: scale(1.5); opacity: 0.6; }
+      }
+      .hero-title {
+        font-family: "Fredoka One", cursive;
+        font-size: clamp(36px, 7vw, 82px);
+        line-height: 1.08;
+        letter-spacing: -0.5px;
+        color: var(--text);
+        max-width: 720px;
+        animation: fadeUp 0.7s 0.1s ease both;
+      }
+      .hero-title .highlight {
+        color: var(--purple-mid);
+        position: relative;
+        display: inline-block;
+      }
+      .hero-title .highlight::after {
+        content: "";
+        position: absolute;
+        bottom: 4px; left: 0; right: 0;
+        height: 6px;
+        background: var(--pink);
+        border-radius: 4px;
+        opacity: 0.35;
+        z-index: -1;
+      }
+      .hero-sub {
+        margin-top: 20px;
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 420px;
+        line-height: 1.7;
+        font-weight: 600;
+        animation: fadeUp 0.7s 0.2s ease both;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 14px;
+        margin-top: 32px;
+        animation: fadeUp 0.7s 0.3s ease both;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .btn-primary {
+        background: var(--purple);
+        color: #fff;
+        padding: 14px 32px;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: 800;
+        text-decoration: none;
+        transition: transform 0.15s, background 0.2s;
+        letter-spacing: 0.3px;
+        box-shadow: 0 0 28px rgba(124, 58, 237, 0.45);
+      }
+      .btn-primary:hover { background: var(--purple-mid); color: var(--bg); transform: translateY(-2px); }
+      .btn-secondary {
+        background: transparent;
+        color: var(--text);
+        padding: 14px 28px;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+        border: 2px solid var(--border);
+        transition: border-color 0.2s, transform 0.15s, color 0.2s;
+      }
+      .btn-secondary:hover { border-color: var(--purple-mid); color: var(--purple-mid); transform: translateY(-2px); }
+
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(22px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ─── Cards fan (DESKTOP) ─── */
+      .cards-stage {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        height: 320px;
+        margin: 48px auto 0;
+        perspective: 1200px;
+        animation: fadeUp 0.8s 0.4s ease both;
+      }
+      /* Player tags only shown in desktop fan */
+      .player-tag {
+        position: absolute;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        padding: 7px 16px;
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--text);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 20;
+        pointer-events: none;
+        animation: floatTag 3s ease-in-out infinite;
+      }
+      .player-tag::before { content: attr(data-emoji); font-size: 15px; }
+      .player-tag.tag-1 { top: 35px; left: 6%; animation-delay: 0s; }
+      .player-tag.tag-2 { top: 20px; right: 8%; animation-delay: 0.8s; }
+      .player-tag.tag-3 { bottom: 30px; left: 12%; animation-delay: 1.4s; }
+      .player-tag.tag-4 { bottom: 50px; right: 10%; animation-delay: 0.4s; }
+      @keyframes floatTag {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-8px); }
+      }
+
+      .game-card {
+        position: absolute;
+        width: 180px;
+        height: 240px;
+        border-radius: var(--card-r);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+        transform-origin: center bottom;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 6px 20px rgba(0,0,0,0.3);
+        left: 50%;
+        bottom: 10px;
+        user-select: none;
+      }
+      .game-card:hover {
+        z-index: 99 !important;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.65), 0 10px 30px rgba(0,0,0,0.4);
+      }
+      .game-card:nth-child(1) {
+        transform: translateX(calc(-50% - 290px)) rotate(-22deg) translateY(30px);
+        background: linear-gradient(145deg, #ff7733, #b83200);
+        z-index: 1;
+      }
+      .game-card:nth-child(1):hover { transform: translateX(calc(-50% - 290px)) rotate(-22deg) translateY(10px) scale(1.06); }
+      .game-card:nth-child(2) {
+        transform: translateX(calc(-50% - 145px)) rotate(-11deg) translateY(14px);
+        background: linear-gradient(145deg, #f59e0b, #78350f);
+        z-index: 2;
+      }
+      .game-card:nth-child(2):hover { transform: translateX(calc(-50% - 145px)) rotate(-11deg) translateY(-6px) scale(1.06); }
+      .game-card:nth-child(3) {
+        transform: translateX(-50%) rotate(0deg) translateY(0px);
+        background: linear-gradient(145deg, #a78bfa, #4c1d95);
+        z-index: 5;
+      }
+      .game-card:nth-child(3):hover { transform: translateX(-50%) rotate(0deg) translateY(-16px) scale(1.08); }
+      .game-card:nth-child(4) {
+        transform: translateX(calc(-50% + 145px)) rotate(11deg) translateY(14px);
+        background: linear-gradient(145deg, #00e5ff, #0369a1);
+        z-index: 2;
+      }
+      .game-card:nth-child(4):hover { transform: translateX(calc(-50% + 145px)) rotate(11deg) translateY(-6px) scale(1.06); }
+      .game-card:nth-child(5) {
+        transform: translateX(calc(-50% + 290px)) rotate(22deg) translateY(30px);
+        background: linear-gradient(145deg, #d4a574, #7c3d12);
+        z-index: 1;
+      }
+      .game-card:nth-child(5):hover { transform: translateX(calc(-50% + 290px)) rotate(22deg) translateY(10px) scale(1.06); }
+
+      .card-emoji {
+        font-size: 52px;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+        transition: transform 0.3s;
+      }
+      .game-card:hover .card-emoji { transform: scale(1.15) translateY(-4px); }
+      .card-name {
+        font-family: "Fredoka One", cursive;
+        font-size: 18px;
+        color: rgba(255,255,255,0.95);
+        letter-spacing: 0.5px;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      }
+      .card-players {
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.65);
+        background: rgba(0,0,0,0.28);
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .game-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: var(--card-r);
+        background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+        pointer-events: none;
+      }
+
+      /* Mobile card scroll strip — hidden on desktop */
+      .cards-scroll {
+        display: none;
+      }
+
+      /* ─── Stats ─── */
+      .stats {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        gap: 64px;
+        padding: 56px 24px 24px;
+        animation: fadeUp 0.8s 0.6s ease both;
+      }
+      .stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+      .stat-num {
+        font-family: "Fredoka One", cursive;
+        font-size: 38px;
+        color: var(--purple-mid);
+        line-height: 1;
+      }
+      .stat-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .stats-divider { width: 1px; background: var(--border); align-self: stretch; }
+
+      /* ─── Games section ─── */
+      .games-section {
+        position: relative;
+        z-index: 10;
+        padding: 64px 48px;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .section-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 48px;
+      }
+      .section-eyebrow-line { flex: 1; height: 1px; background: var(--border); }
+      .section-eyebrow span {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: var(--muted);
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 16px;
+      }
+      .game-tile {
+        background: var(--surface);
+        border-radius: 20px;
+        padding: 28px 20px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .game-tile::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 20px 20px 0 0;
+      }
+      .game-tile:nth-child(1)::before { background: var(--c-bomb); }
+      .game-tile:nth-child(2)::before { background: var(--c-spy); }
+      .game-tile:nth-child(3)::before { background: var(--c-hangman); }
+      .game-tile:nth-child(4)::before { background: var(--c-guess); }
+      .game-tile:nth-child(5)::before { background: var(--c-mafia); }
+      .game-tile:hover { transform: translateY(-4px); }
+      .game-tile:nth-child(1):hover { box-shadow: 0 16px 40px rgba(255,85,0,0.18); border-color: rgba(255,85,0,0.35); }
+      .game-tile:nth-child(2):hover { box-shadow: 0 16px 40px rgba(217,119,6,0.18); border-color: rgba(217,119,6,0.35); }
+      .game-tile:nth-child(3):hover { box-shadow: 0 16px 40px rgba(167,139,250,0.18); border-color: rgba(167,139,250,0.35); }
+      .game-tile:nth-child(4):hover { box-shadow: 0 16px 40px rgba(0,229,255,0.18); border-color: rgba(0,229,255,0.35); }
+      .game-tile:nth-child(5):hover { box-shadow: 0 16px 40px rgba(212,165,116,0.18); border-color: rgba(212,165,116,0.35); }
+      .tile-emoji-wrap {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        margin-bottom: 4px;
+      }
+      .tile-title { font-family: "Fredoka One", cursive; font-size: 20px; color: var(--text); letter-spacing: 0.3px; }
+      .tile-desc { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 600; }
+      .tile-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      /* ─── Features ─── */
+      .features {
+        position: relative;
+        z-index: 10;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 48px 80px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+      }
+      .feature-card {
+        background: var(--surface);
+        border-radius: 24px;
+        padding: 36px 30px;
+        border: 1px solid var(--border);
+        transition: border-color 0.2s, transform 0.2s;
+      }
+      .feature-card:hover { border-color: rgba(167,139,250,0.35); transform: translateY(-3px); }
+      .feature-icon { font-size: 36px; margin-bottom: 16px; display: block; }
+      .feature-title { font-family: "Fredoka One", cursive; font-size: 22px; color: var(--text); margin-bottom: 10px; }
+      .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 600; }
+
+      /* ─── CTA banner ─── */
+      .cta-banner {
+        position: relative;
+        z-index: 10;
+        margin: 0 48px 80px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, #1e0b3e 0%, #3b0764 40%, #5b21b6 100%);
+        border: 1px solid rgba(167,139,250,0.2);
+        padding: 64px 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        overflow: hidden;
+        gap: 32px;
+      }
+      .cta-banner::before {
+        content: "";
+        position: absolute;
+        width: 400px; height: 400px;
+        background: rgba(167,139,250,0.08);
+        border-radius: 50%;
+        right: -80px; top: -120px;
+      }
+      .cta-banner::after {
+        content: "";
+        position: absolute;
+        width: 260px; height: 260px;
+        background: rgba(240,62,110,0.06);
+        border-radius: 50%;
+        right: 120px; bottom: -100px;
+      }
+      .cta-left { position: relative; z-index: 2; }
+      .cta-title { font-family: "Fredoka One", cursive; font-size: 38px; color: var(--text); line-height: 1.1; margin-bottom: 12px; }
+      .cta-sub { font-size: 15px; color: var(--muted); font-weight: 600; line-height: 1.6; }
+      .cta-right { position: relative; z-index: 2; flex-shrink: 0; }
+      .btn-white {
+        background: var(--purple-mid);
+        color: var(--bg);
+        padding: 16px 40px;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: 800;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+        box-shadow: 0 8px 30px rgba(167,139,250,0.35);
+        letter-spacing: 0.3px;
+      }
+      .btn-white:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 14px 40px rgba(167,139,250,0.5); }
+
+      /* ─── Footer ─── */
+      footer {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        padding: 32px 24px 48px;
+        border-top: 1px solid var(--border);
+      }
+      .footer-logo { font-family: "Fredoka One", cursive; font-size: 28px; color: var(--purple-mid); margin-bottom: 8px; }
+      .footer-tagline { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+
+
+      /* ═══════════════════════════════════════════════
+         RESPONSIVE — tablet  ≤ 900px
+      ═══════════════════════════════════════════════ */
+      @media (max-width: 900px) {
+        nav { padding: 18px 28px; }
+
+        .games-section { padding: 48px 28px; }
+        .features { padding: 0 28px 60px; grid-template-columns: 1fr 1fr; }
+        .cta-banner { margin: 0 28px 60px; padding: 48px 40px; }
+        .stats { gap: 40px; }
+      }
+
+
+      /* ═══════════════════════════════════════════════
+         RESPONSIVE — mobile  ≤ 640px
+      ═══════════════════════════════════════════════ */
+      @media (max-width: 640px) {
+
+        /* ── Nav ── */
+        nav {
+          padding: 16px 20px;
+          position: sticky;
+          top: 0;
+        }
+        /* Hide the full link list on mobile */
+        .nav-links { display: none; }
+        /* Show a compact download CTA next to the logo */
+        .nav-mobile-cta {
+          display: inline-flex;
+          align-items: center;
+          background: var(--purple);
+          color: #fff;
+          font-size: 13px;
+          font-weight: 800;
+          padding: 9px 18px;
+          border-radius: 50px;
+          text-decoration: none;
+          letter-spacing: 0.3px;
+          white-space: nowrap;
+        }
+
+        /* ── Hero ── */
+        .hero {
+          padding: 48px 20px 0;
+        }
+        .hero-eyebrow {
+          font-size: 10px;
+          letter-spacing: 1px;
+          padding: 5px 14px;
+        }
+        .hero-sub { font-size: 14px; }
+        .hero-actions {
+          flex-direction: column;
+          align-items: stretch;
+          width: 100%;
+          max-width: 320px;
+          gap: 10px;
+        }
+        .btn-primary,
+        .btn-secondary {
+          text-align: center;
+          padding: 14px 20px;
+          font-size: 14px;
+        }
+
+        /* ── Cards: hide desktop fan, show scroll strip ── */
+        .cards-stage { display: none; }
+        .player-tag  { display: none; }
+
+        .cards-scroll {
+          display: flex;
+          gap: 14px;
+          overflow-x: auto;
+          padding: 32px 20px 12px;
+          width: 100%;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          animation: fadeUp 0.8s 0.4s ease both;
+          /* Make it extend to screen edges */
+          margin-left: calc(-20px);
+          padding-left: 20px;
+          width: calc(100% + 40px);
+        }
+        .cards-scroll::-webkit-scrollbar { display: none; }
+
+        .scroll-card {
+          flex-shrink: 0;
+          width: 140px;
+          height: 190px;
+          border-radius: 18px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          position: relative;
+          box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+          cursor: pointer;
+          transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+          user-select: none;
+        }
+        .scroll-card:last-child { margin-right: 20px; }
+        .scroll-card:active { transform: scale(0.96); }
+
+        .scroll-card:nth-child(1) { background: linear-gradient(145deg, #ff7733, #b83200); }
+        .scroll-card:nth-child(2) { background: linear-gradient(145deg, #f59e0b, #78350f); }
+        .scroll-card:nth-child(3) { background: linear-gradient(145deg, #a78bfa, #4c1d95); }
+        .scroll-card:nth-child(4) { background: linear-gradient(145deg, #00e5ff, #0369a1); }
+        .scroll-card:nth-child(5) { background: linear-gradient(145deg, #d4a574, #7c3d12); }
+
+        .scroll-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 18px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+          pointer-events: none;
+        }
+        .scroll-card .card-emoji  { font-size: 40px; }
+        .scroll-card .card-name   { font-size: 15px; }
+        .scroll-card .card-players { font-size: 10px; }
+
+        /* Scroll hint fade on right edge */
+        .cards-scroll-wrap {
+          position: relative;
+          overflow: hidden;
+        }
+        .cards-scroll-wrap::after {
+          content: "";
+          position: absolute;
+          top: 0; right: 0; bottom: 0;
+          width: 48px;
+          background: linear-gradient(to right, transparent, var(--bg));
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        /* ── Stats ── */
+        .stats {
+          gap: 0;
+          padding: 40px 20px 20px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          row-gap: 24px;
+        }
+        /* Hide vertical dividers, add horizontal line between rows */
+        .stats-divider { display: none; }
+        .stat { padding: 0 8px; }
+        .stat:nth-child(1) { border-right: 1px solid var(--border); }
+        .stat:nth-child(3) { border-right: 1px solid var(--border); }
+        .stat-num  { font-size: 30px; }
+        .stat-label { font-size: 11px; }
+
+        /* ── Games grid ── */
+        .games-section {
+          padding: 40px 16px;
+        }
+        .section-eyebrow { margin-bottom: 28px; }
+        .games-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        /* Make the 5th tile span full width so it's not orphaned */
+        .game-tile:last-child {
+          grid-column: 1 / -1;
+        }
+        .game-tile {
+          padding: 20px 16px 18px;
+          border-radius: 16px;
+          gap: 8px;
+        }
+        .tile-emoji-wrap { width: 44px; height: 44px; font-size: 22px; border-radius: 12px; }
+        .tile-title { font-size: 17px; }
+        .tile-desc  { font-size: 12px; }
+
+        /* ── Features ── */
+        .features {
+          padding: 0 16px 50px;
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+        .feature-card { padding: 28px 22px; border-radius: 18px; }
+        .feature-icon { font-size: 30px; margin-bottom: 12px; }
+        .feature-title { font-size: 19px; }
+        .feature-desc { font-size: 13px; }
+
+        /* ── CTA ── */
+        .cta-banner {
+          flex-direction: column;
+          align-items: flex-start;
+          margin: 0 16px 50px;
+          padding: 36px 28px;
+          border-radius: 22px;
+          gap: 24px;
+        }
+        .cta-title { font-size: 26px; }
+        .cta-sub   { font-size: 13px; }
+        .cta-right { width: 100%; }
+        .btn-white {
+          width: 100%;
+          text-align: center;
+          padding: 15px 20px;
+          font-size: 14px;
+        }
+
+        /* ── Footer ── */
+        footer { padding: 28px 20px 36px; }
+        .footer-logo { font-size: 24px; }
+        .footer-tagline { font-size: 11px; }
+      }
+
+      /* ═══════════════════════════════════════════════
+         RESPONSIVE — very small  ≤ 360px
+      ═══════════════════════════════════════════════ */
+      @media (max-width: 360px) {
+        .games-grid { grid-template-columns: 1fr; }
+        .game-tile:last-child { grid-column: auto; }
+        .hero-title { font-size: 32px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="confetti-layer" id="confetti"></div>
+
+    <!-- ── Nav ── -->
+    <nav>
+      <a class="nav-logo" href="#">
+        <span class="nav-logo-dot"></span>
+        Funtopia
+      </a>
+      <ul class="nav-links">
+        <li><a href="#games">Games</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="app.apk" class="nav-cta">Download</a></li>
+      </ul>
+      <!-- Shown only on mobile -->
+      <a href="app.apk" class="nav-mobile-cta">Download ↓</a>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-dot"></span>
+        5 games · 1 phone · infinite fun
+      </div>
+
+      <h1 class="hero-title">
+        The party game app<br />your group <span class="highlight">actually</span> wants.
+      </h1>
+
+      <p class="hero-sub">
+        Five wildly different games. One phone. Drop the boredom — pick up Funtopia.
+      </p>
+
+      <div class="hero-actions">
+        <a href="app.apk" class="btn-primary">Download Free</a>
+        <a href="#games" class="btn-secondary">See all games →</a>
+      </div>
+
+      <!-- Desktop: fanned cards stage -->
+      <div class="cards-stage">
+
+        <div class="game-card">
+          <span class="card-emoji">💣</span>
+          <span class="card-name">TicTac Bomb</span>
+          <span class="card-players">2+ players</span>
+        </div>
+        <div class="game-card">
+          <span class="card-emoji">🕵️</span>
+          <span class="card-name">Spy Game</span>
+          <span class="card-players">3+ players</span>
+        </div>
+        <div class="game-card">
+          <span class="card-emoji">🪢</span>
+          <span class="card-name">Hangman</span>
+          <span class="card-players">2+ players</span>
+        </div>
+        <div class="game-card">
+          <span class="card-emoji">🧠</span>
+          <span class="card-name">Guess It!</span>
+          <span class="card-players">2+ players</span>
+        </div>
+        <div class="game-card">
+          <span class="card-emoji">🎭</span>
+          <span class="card-name">Mafia</span>
+          <span class="card-players">6+ players</span>
+        </div>
+      </div>
+
+      <!-- Mobile: horizontal scroll strip -->
+      <div class="cards-scroll-wrap" style="width:100%;">
+        <div class="cards-scroll">
+          <div class="scroll-card">
+            <span class="card-emoji">💣</span>
+            <span class="card-name">TicTac Bomb</span>
+            <span class="card-players">2+ players</span>
+          </div>
+          <div class="scroll-card">
+            <span class="card-emoji">🕵️</span>
+            <span class="card-name">Spy Game</span>
+            <span class="card-players">3+ players</span>
+          </div>
+          <div class="scroll-card">
+            <span class="card-emoji">🪢</span>
+            <span class="card-name">Hangman</span>
+            <span class="card-players">2+ players</span>
+          </div>
+          <div class="scroll-card">
+            <span class="card-emoji">🧠</span>
+            <span class="card-name">Guess It!</span>
+            <span class="card-players">2+ players</span>
+          </div>
+          <div class="scroll-card">
+            <span class="card-emoji">🎭</span>
+            <span class="card-name">Mafia</span>
+            <span class="card-players">6+ players</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Stats ── -->
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-num">5</span>
+        <span class="stat-label">Games</span>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="stat">
+        <span class="stat-num">0</span>
+        <span class="stat-label">Setup needed</span>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="stat">
+        <span class="stat-num">∞</span>
+        <span class="stat-label">Replay value</span>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="stat">
+        <span class="stat-num">1</span>
+        <span class="stat-label">Phone required</span>
+      </div>
+    </div>
+
+    <!-- ── Games grid ── -->
+    <section class="games-section" id="games">
+      <div class="section-eyebrow">
+        <div class="section-eyebrow-line"></div>
+        <span>All Games</span>
+        <div class="section-eyebrow-line"></div>
+      </div>
+
+      <div class="games-grid">
+        <div class="game-tile">
+          <div class="tile-emoji-wrap" style="background:rgba(255,85,0,0.12)">💣</div>
+          <span class="tile-title">TicTac Bomb</span>
+          <span class="tile-desc">Answer trivia before the bomb explodes. Last one standing wins.</span>
+          <span class="tile-badge" style="background:rgba(255,85,0,0.12);color:#ff7733">2+ Players</span>
+        </div>
+        <div class="game-tile">
+          <div class="tile-emoji-wrap" style="background:rgba(217,119,6,0.12)">🕵️</div>
+          <span class="tile-title">Spy Game</span>
+          <span class="tile-desc">Everyone knows the word — except the spy. Find them before they fool you.</span>
+          <span class="tile-badge" style="background:rgba(217,119,6,0.12);color:#d97706">3+ Players</span>
+        </div>
+        <div class="game-tile">
+          <div class="tile-emoji-wrap" style="background:rgba(167,139,250,0.12)">🪢</div>
+          <span class="tile-title">Hangman</span>
+          <span class="tile-desc">Guess the secret word one letter at a time. Six wrong moves and it's over.</span>
+          <span class="tile-badge" style="background:rgba(167,139,250,0.12);color:#a78bfa">2+ Players</span>
+        </div>
+        <div class="game-tile">
+          <div class="tile-emoji-wrap" style="background:rgba(0,229,255,0.1)">🧠</div>
+          <span class="tile-title">Guess It!</span>
+          <span class="tile-desc">Phone on your forehead. Let your friends guide you to the answer.</span>
+          <span class="tile-badge" style="background:rgba(0,229,255,0.1);color:#00e5ff">2+ Players</span>
+        </div>
+        <div class="game-tile">
+          <div class="tile-emoji-wrap" style="background:rgba(212,165,116,0.12)">🎭</div>
+          <span class="tile-title">Mafia</span>
+          <span class="tile-desc">Town vs. Mafia. Vote, deceive, and eliminate before it's too late.</span>
+          <span class="tile-badge" style="background:rgba(212,165,116,0.12);color:#d4a574">6+ Players</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Features ── -->
+    <div class="features" id="features">
+      <div class="feature-card">
+        <span class="feature-icon">📴</span>
+        <div class="feature-title">Works Offline</div>
+        <p class="feature-desc">No internet? No problem. Every game works completely offline — perfect for gatherings anywhere.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-title">Zero Setup</div>
+        <p class="feature-desc">Open the app, add players, pick a game. You'll be playing within 30 seconds. That's it.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🏆</span>
+        <div class="feature-title">Score & Win</div>
+        <p class="feature-desc">Every game tracks points and crowns a winner. Full leaderboard after every round.</p>
+      </div>
+    </div>
+
+    <!-- ── CTA banner ── -->
+    <div class="cta-banner">
+      <div class="cta-left">
+        <div class="cta-title">Ready to stop being bored?</div>
+        <p class="cta-sub">Download Funtopia free. Works on Android & iOS.<br />One phone, the whole group — let's go.</p>
+      </div>
+      <div class="cta-right">
+        <a href="app.apk" class="btn-white">Download Now — It's Free</a>
+      </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <footer>
+      <div class="footer-logo">Funtopia</div>
+      <div class="footer-tagline">· group games ·</div>
+    </footer>
+
+    <!-- ── Confetti ── -->
+    <script>
+      (function () {
+        const layer = document.getElementById("confetti");
+        const dots = [
+          [0.05,0.04,5,0.2],[0.12,0.07,3,0.16],[0.22,0.03,4,0.14],[0.38,0.05,6,0.12],
+          [0.55,0.08,3,0.16],[0.68,0.02,7,0.1],[0.8,0.06,4,0.18],[0.92,0.04,5,0.14],
+          [0.96,0.11,3,0.12],[0.04,0.15,4,0.1],[0.18,0.18,6,0.09],[0.72,0.14,3,0.14],
+          [0.88,0.17,5,0.12],[0.03,0.28,3,0.09],[0.95,0.32,6,0.1],[0.08,0.42,4,0.1],
+          [0.91,0.48,5,0.09],[0.05,0.58,3,0.1],[0.94,0.62,4,0.1],[0.07,0.72,6,0.09],
+          [0.92,0.76,3,0.1],[0.1,0.85,5,0.1],[0.88,0.88,4,0.09],[0.15,0.93,3,0.14],
+          [0.6,0.91,6,0.09],[0.45,0.06,4,0.12],[0.3,0.12,3,0.09],[0.75,0.09,5,0.1],
+          [0.5,0.96,4,0.09],[0.35,0.88,3,0.1],
+        ];
+        dots.forEach(([xr,yr,size,op],i) => {
+          const el = document.createElement("span");
+          el.style.cssText = `left:${xr*100}%;top:${yr*100}%;width:${size}px;height:${size}px;--op:${op};animation-delay:${i*0.04}s;`;
+          layer.appendChild(el);
+        });
+        const dashes = [
+          [0.25,0.03,20,-15,0.16],[0.72,0.07,14,10,0.12],[0.42,0.13,22,-5,0.11],
+          [0.88,0.22,12,25,0.12],[0.15,0.3,18,-20,0.1],[0.04,0.55,16,12,0.1],
+          [0.93,0.6,14,-10,0.11],[0.78,0.72,18,5,0.1],[0.06,0.8,20,-15,0.1],
+          [0.55,0.86,14,20,0.11],[0.35,0.94,18,-12,0.09],[0.82,0.9,16,8,0.1],
+          [0.48,0.02,12,-8,0.14],[0.62,0.2,16,-18,0.1],
+        ];
+        dashes.forEach(([xr,yr,w,rot,op],i) => {
+          const el = document.createElement("span");
+          el.className = "dash";
+          el.style.cssText = `left:${xr*100}%;top:${yr*100}%;width:${w}px;transform:rotate(${rot}deg);--op:${op};animation-delay:${i*0.06+0.1}s;`;
+          layer.appendChild(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
